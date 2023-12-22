@@ -2,6 +2,61 @@ package methodology
 
 import "testing"
 
+func TestListReturnsFullCopies(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {
+				ID:       "debug",
+				Usage:    "inspect a failure",
+				MainIdea: "isolate the smallest failing case",
+				Scenario: []string{"debugging"},
+				Strategy: []string{"reproduce"},
+				Steps:    []string{"run focused test"},
+				Examples: []string{"go test ./..."},
+			},
+		},
+	}
+
+	got := table.List()
+	if len(got) != 1 {
+		t.Fatalf("List() length = %d, want %d", len(got), 1)
+	}
+	if got[0].MainIdea != "isolate the smallest failing case" {
+		t.Errorf("List()[0].MainIdea = %q, want %q", got[0].MainIdea, "isolate the smallest failing case")
+	}
+	if got[0].Strategy[0] != "reproduce" {
+		t.Errorf("List()[0].Strategy[0] = %q, want %q", got[0].Strategy[0], "reproduce")
+	}
+	if got[0].Steps[0] != "run focused test" {
+		t.Errorf("List()[0].Steps[0] = %q, want %q", got[0].Steps[0], "run focused test")
+	}
+	if got[0].Examples[0] != "go test ./..." {
+		t.Errorf("List()[0].Examples[0] = %q, want %q", got[0].Examples[0], "go test ./...")
+	}
+
+	got[0].Scenario[0] = "changed"
+	got[0].Strategy[0] = "changed"
+	got[0].Steps[0] = "changed"
+	got[0].Examples[0] = "changed"
+
+	again := table.List()
+	if len(again) != 1 {
+		t.Fatalf("List() after mutation length = %d, want %d", len(again), 1)
+	}
+	if again[0].Scenario[0] != "debugging" {
+		t.Errorf("List()[0].Scenario[0] after mutation = %q, want %q", again[0].Scenario[0], "debugging")
+	}
+	if again[0].Strategy[0] != "reproduce" {
+		t.Errorf("List()[0].Strategy[0] after mutation = %q, want %q", again[0].Strategy[0], "reproduce")
+	}
+	if again[0].Steps[0] != "run focused test" {
+		t.Errorf("List()[0].Steps[0] after mutation = %q, want %q", again[0].Steps[0], "run focused test")
+	}
+	if again[0].Examples[0] != "go test ./..." {
+		t.Errorf("List()[0].Examples[0] after mutation = %q, want %q", again[0].Examples[0], "go test ./...")
+	}
+}
+
 func TestTryGetReturnsCopy(t *testing.T) {
 	table := &Methodologies{
 		data: map[string]*Methodology{

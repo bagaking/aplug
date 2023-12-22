@@ -7,13 +7,7 @@ func (table *Methodologies) List() []*Methodology {
 
 	ret := make([]*Methodology, 0, len(table.data))
 	for _, value := range table.data {
-		// 深拷贝
-		details := &Methodology{
-			ID:       value.ID,
-			Usage:    value.Usage,
-			Scenario: append([]string{}, value.Scenario...),
-		}
-		ret = append(ret, details)
+		ret = append(ret, cloneMethodology(value))
 	}
 	return ret
 }
