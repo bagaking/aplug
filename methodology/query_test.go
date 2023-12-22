@@ -1,0 +1,94 @@
+package methodology
+
+import "testing"
+
+func TestTryGetReturnsCopy(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {
+				ID:       "debug",
+				Usage:    "inspect a failure",
+				MainIdea: "isolate the smallest failing case",
+				Scenario: []string{"debugging"},
+				Strategy: []string{"reproduce"},
+				Steps:    []string{"run focused test"},
+				Examples: []string{"go test ./..."},
+			},
+		},
+	}
+
+	got := table.TryGet("debug")
+	if got == nil {
+		t.Fatalf("TryGet(%q) = nil, want methodology", "debug")
+	}
+
+	got.Scenario[0] = "changed"
+	got.Strategy[0] = "changed"
+	got.Steps[0] = "changed"
+	got.Examples[0] = "changed"
+
+	again := table.TryGet("debug")
+	if again.Scenario[0] != "debugging" {
+		t.Errorf("TryGet(%q).Scenario[0] after mutation = %q, want %q", "debug", again.Scenario[0], "debugging")
+	}
+	if again.Strategy[0] != "reproduce" {
+		t.Errorf("TryGet(%q).Strategy[0] after mutation = %q, want %q", "debug", again.Strategy[0], "reproduce")
+	}
+	if again.Steps[0] != "run focused test" {
+		t.Errorf("TryGet(%q).Steps[0] after mutation = %q, want %q", "debug", again.Steps[0], "run focused test")
+	}
+	if again.Examples[0] != "go test ./..." {
+		t.Errorf("TryGet(%q).Examples[0] after mutation = %q, want %q", "debug", again.Examples[0], "go test ./...")
+	}
+}
+
+func TestMGetSkipsMissingKeys(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {ID: "debug", Usage: "inspect a failure"},
+			"plan":  {ID: "plan", Usage: "sequence work"},
+		},
+	}
+
+	got := table.MGet("debug", "missing", "plan")
+	if len(got) != 2 {
+		t.Fatalf("MGet(%q, %q, %q) length = %d, want %d", "debug", "missing", "plan", len(got), 2)
+	}
+	if got[0].ID != "debug" {
+		t.Errorf("MGet(%q, %q, %q)[0].ID = %q, want %q", "debug", "missing", "plan", got[0].ID, "debug")
+	}
+	if got[1].ID != "plan" {
+		t.Errorf("MGet(%q, %q, %q)[1].ID = %q, want %q", "debug", "missing", "plan", got[1].ID, "plan")
+	}
+}
+
+func TestGetBySceneReturnsCopies(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {
+				ID:       "debug",
+				Usage:    "inspect a failure",
+				Scenario: []string{"debugging", "testing"},
+			},
+			"plan": {
+				ID:       "plan",
+				Usage:    "sequence work",
+				Scenario: []string{"planning"},
+			},
+		},
+	}
+
+	got := table.GetByScene("debugging")
+	if len(got) != 1 {
+		t.Fatalf("GetByScene(%q) length = %d, want %d", "debugging", len(got), 1)
+	}
+	if got[0].ID != "debug" {
+		t.Errorf("GetByScene(%q)[0].ID = %q, want %q", "debugging", got[0].ID, "debug")
+	}
+
+	got[0].Scenario[0] = "changed"
+	again := table.GetByScene("debugging")
+	if again[0].Scenario[0] != "debugging" {
+		t.Errorf("GetByScene(%q)[0].Scenario[0] after mutation = %q, want %q", "debugging", again[0].Scenario[0], "debugging")
+	}
+}
