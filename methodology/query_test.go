@@ -228,3 +228,56 @@ func TestSetStoresCopy(t *testing.T) {
 		t.Errorf("TryGet(%q).Examples[0] after input mutation = %q, want %q", "debug", got.Examples[0], "go test ./...")
 	}
 }
+
+func TestUpdatedByUsesCopies(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {
+				ID:       "debug",
+				Usage:    "inspect a failure",
+				MainIdea: "isolate the smallest failing case",
+				Scenario: []string{"debugging"},
+				Strategy: []string{"reproduce"},
+				Steps:    []string{"run focused test"},
+				Examples: []string{"go test ./..."},
+			},
+		},
+	}
+
+	original := table.data["debug"]
+	var returned *Methodology
+	err := table.UpdatedBy("debug", func(m *Methodology) *Methodology {
+		if m == original {
+			t.Errorf("UpdatedBy(%q) passed stored methodology pointer to callback, want copy", "debug")
+		}
+		m.Scenario[0] = "callback changed"
+		m.Strategy[0] = "callback changed"
+		m.Steps[0] = "callback changed"
+		m.Examples[0] = "callback changed"
+
+		returned = m
+		return m
+	})
+	if err != nil {
+		t.Fatalf("UpdatedBy(%q) error = %v, want nil", "debug", err)
+	}
+
+	returned.Scenario[0] = "changed after update"
+	returned.Strategy[0] = "changed after update"
+	returned.Steps[0] = "changed after update"
+	returned.Examples[0] = "changed after update"
+
+	got := table.TryGet("debug")
+	if got.Scenario[0] != "callback changed" {
+		t.Errorf("TryGet(%q).Scenario[0] after returned mutation = %q, want %q", "debug", got.Scenario[0], "callback changed")
+	}
+	if got.Strategy[0] != "callback changed" {
+		t.Errorf("TryGet(%q).Strategy[0] after returned mutation = %q, want %q", "debug", got.Strategy[0], "callback changed")
+	}
+	if got.Steps[0] != "callback changed" {
+		t.Errorf("TryGet(%q).Steps[0] after returned mutation = %q, want %q", "debug", got.Steps[0], "callback changed")
+	}
+	if got.Examples[0] != "callback changed" {
+		t.Errorf("TryGet(%q).Examples[0] after returned mutation = %q, want %q", "debug", got.Examples[0], "callback changed")
+	}
+}

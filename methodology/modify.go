@@ -34,6 +34,6 @@ func (table *Methodologies) UpdatedBy(
 	if !ok {
 		return fmt.Errorf("methodology not found: %v", key)
 	}
-	table.data[key] = fn(method)
+	table.data[key] = cloneMethodology(fn(cloneMethodology(method)))
 	return nil
 }
