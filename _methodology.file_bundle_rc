@@ -1,0 +1,10 @@
+entry = [
+    "./methodology/**/*.go",
+]
+
+exclude = [
+]
+
+output = "./bundle/_methodology.bundle"
+
+description = "以下为新文件内容，File 为文件路径"

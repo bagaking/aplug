@@ -19,3 +19,11 @@
 
 # Go workspace file
 go.work
+
+# Folders
+.idea
+.DS_Store
+.vscode
+vendor
+bundle
+output
