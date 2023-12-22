@@ -62,6 +62,49 @@ func TestMGetSkipsMissingKeys(t *testing.T) {
 	}
 }
 
+func TestMGetReturnsCopies(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {
+				ID:       "debug",
+				Usage:    "inspect a failure",
+				MainIdea: "isolate the smallest failing case",
+				Scenario: []string{"debugging"},
+				Strategy: []string{"reproduce"},
+				Steps:    []string{"run focused test"},
+				Examples: []string{"go test ./..."},
+			},
+		},
+	}
+
+	got := table.MGet("debug")
+	if len(got) != 1 {
+		t.Fatalf("MGet(%q) length = %d, want %d", "debug", len(got), 1)
+	}
+
+	got[0].Scenario[0] = "changed"
+	got[0].Strategy[0] = "changed"
+	got[0].Steps[0] = "changed"
+	got[0].Examples[0] = "changed"
+
+	again := table.MGet("debug")
+	if len(again) != 1 {
+		t.Fatalf("MGet(%q) after mutation length = %d, want %d", "debug", len(again), 1)
+	}
+	if again[0].Scenario[0] != "debugging" {
+		t.Errorf("MGet(%q)[0].Scenario[0] after mutation = %q, want %q", "debug", again[0].Scenario[0], "debugging")
+	}
+	if again[0].Strategy[0] != "reproduce" {
+		t.Errorf("MGet(%q)[0].Strategy[0] after mutation = %q, want %q", "debug", again[0].Strategy[0], "reproduce")
+	}
+	if again[0].Steps[0] != "run focused test" {
+		t.Errorf("MGet(%q)[0].Steps[0] after mutation = %q, want %q", "debug", again[0].Steps[0], "run focused test")
+	}
+	if again[0].Examples[0] != "go test ./..." {
+		t.Errorf("MGet(%q)[0].Examples[0] after mutation = %q, want %q", "debug", again[0].Examples[0], "go test ./...")
+	}
+}
+
 func TestGetBySceneReturnsCopies(t *testing.T) {
 	table := &Methodologies{
 		data: map[string]*Methodology{
