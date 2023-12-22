@@ -20,7 +20,7 @@ func NewContainer() *Methodologies {
 		mu:   sync.RWMutex{},
 	}
 	for key, value := range DefaultContainer().data {
-		container.data[key] = value
+		container.data[key] = cloneMethodology(value)
 	}
 
 	return container

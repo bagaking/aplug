@@ -135,3 +135,41 @@ func TestGetBySceneReturnsCopies(t *testing.T) {
 		t.Errorf("GetByScene(%q)[0].Scenario[0] after mutation = %q, want %q", "debugging", again[0].Scenario[0], "debugging")
 	}
 }
+
+func TestSetStoresCopy(t *testing.T) {
+	table := &Methodologies{
+		data: make(map[string]*Methodology),
+	}
+	input := &Methodology{
+		ID:       "debug",
+		Usage:    "inspect a failure",
+		MainIdea: "isolate the smallest failing case",
+		Scenario: []string{"debugging"},
+		Strategy: []string{"reproduce"},
+		Steps:    []string{"run focused test"},
+		Examples: []string{"go test ./..."},
+	}
+
+	table.Set("debug", input)
+	input.Scenario[0] = "changed"
+	input.Strategy[0] = "changed"
+	input.Steps[0] = "changed"
+	input.Examples[0] = "changed"
+
+	got := table.TryGet("debug")
+	if got == nil {
+		t.Fatalf("TryGet(%q) after Set = nil, want methodology", "debug")
+	}
+	if got.Scenario[0] != "debugging" {
+		t.Errorf("TryGet(%q).Scenario[0] after input mutation = %q, want %q", "debug", got.Scenario[0], "debugging")
+	}
+	if got.Strategy[0] != "reproduce" {
+		t.Errorf("TryGet(%q).Strategy[0] after input mutation = %q, want %q", "debug", got.Strategy[0], "reproduce")
+	}
+	if got.Steps[0] != "run focused test" {
+		t.Errorf("TryGet(%q).Steps[0] after input mutation = %q, want %q", "debug", got.Steps[0], "run focused test")
+	}
+	if got.Examples[0] != "go test ./..." {
+		t.Errorf("TryGet(%q).Examples[0] after input mutation = %q, want %q", "debug", got.Examples[0], "go test ./...")
+	}
+}

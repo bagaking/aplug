@@ -11,7 +11,7 @@ func (table *Methodologies) Set(key string, m *Methodology) {
 	table.mu.Lock()
 	defer table.mu.Unlock()
 
-	table.data[key] = m
+	table.data[key] = cloneMethodology(m)
 }
 
 // Delete 删除一个技巧
