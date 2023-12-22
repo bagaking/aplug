@@ -11,6 +11,9 @@ func (table *Methodologies) Set(key string, m *Methodology) {
 	table.mu.Lock()
 	defer table.mu.Unlock()
 
+	if table.data == nil {
+		table.data = make(map[string]*Methodology)
+	}
 	table.data[key] = cloneMethodology(m)
 }
 

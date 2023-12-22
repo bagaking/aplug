@@ -229,6 +229,28 @@ func TestSetStoresCopy(t *testing.T) {
 	}
 }
 
+func TestSetInitializesZeroValueContainer(t *testing.T) {
+	var table Methodologies
+	input := &Methodology{
+		ID:       "debug",
+		Usage:    "inspect a failure",
+		Scenario: []string{"debugging"},
+	}
+
+	table.Set("debug", input)
+
+	got := table.TryGet("debug")
+	if got == nil {
+		t.Fatalf("TryGet(%q) after zero-value Set = nil, want methodology", "debug")
+	}
+	if got.ID != "debug" {
+		t.Errorf("TryGet(%q).ID after zero-value Set = %q, want %q", "debug", got.ID, "debug")
+	}
+	if got.Scenario[0] != "debugging" {
+		t.Errorf("TryGet(%q).Scenario[0] after zero-value Set = %q, want %q", "debug", got.Scenario[0], "debugging")
+	}
+}
+
 func TestUpdatedByUsesCopies(t *testing.T) {
 	table := &Methodologies{
 		data: map[string]*Methodology{
