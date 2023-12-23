@@ -20,7 +20,7 @@ There are 5 Go files included in this project:
 This system is meant to be used in a Go environment. You can import it into your Go project and use its interfaces to manage methodologies. Here is a simple usage example:
 
 ```go
-import "github.com/yourusername/go-methodology/methodology"
+import "github.com/bagaking/aplug/methodology"
 
 func main() {
 // Create a new methodology container

@@ -254,6 +254,110 @@ func TestSetInitializesZeroValueContainer(t *testing.T) {
 	}
 }
 
+func TestZeroValueContainerQueryBoundaries(t *testing.T) {
+	var table Methodologies
+
+	tests := []struct {
+		name string
+		got  func() []*Methodology
+	}{
+		{
+			name: "List",
+			got:  table.List,
+		},
+		{
+			name: "MGet",
+			got: func() []*Methodology {
+				return table.MGet("missing")
+			},
+		},
+		{
+			name: "GetByScene",
+			got: func() []*Methodology {
+				return table.GetByScene("missing")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.got()
+			if len(got) != 0 {
+				t.Errorf("%s() on zero-value container length = %d, want %d", tt.name, len(got), 0)
+			}
+		})
+	}
+
+	if got := table.TryGet("missing"); got != nil {
+		t.Errorf("TryGet(%q) on zero-value container = %#v, want nil", "missing", got)
+	}
+}
+
+func TestMissingKeyModifyBoundaries(t *testing.T) {
+	tests := []struct {
+		name    string
+		table   Methodologies
+		act     func(*Methodologies) error
+		wantErr bool
+	}{
+		{
+			name: "Delete zero-value missing key",
+			act: func(table *Methodologies) error {
+				table.Delete("missing")
+				return nil
+			},
+		},
+		{
+			name: "Delete initialized missing key",
+			table: Methodologies{
+				data: map[string]*Methodology{
+					"debug": {ID: "debug", Usage: "inspect a failure"},
+				},
+			},
+			act: func(table *Methodologies) error {
+				table.Delete("missing")
+				return nil
+			},
+		},
+		{
+			name: "UpdatedBy zero-value missing key",
+			act: func(table *Methodologies) error {
+				return table.UpdatedBy("missing", func(m *Methodology) *Methodology {
+					return m
+				})
+			},
+			wantErr: true,
+		},
+		{
+			name: "UpdatedBy initialized missing key",
+			table: Methodologies{
+				data: map[string]*Methodology{
+					"debug": {ID: "debug", Usage: "inspect a failure"},
+				},
+			},
+			act: func(table *Methodologies) error {
+				return table.UpdatedBy("missing", func(m *Methodology) *Methodology {
+					return m
+				})
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			table := tt.table
+			err := tt.act(&table)
+			if gotErr := err != nil; gotErr != tt.wantErr {
+				t.Errorf("%s error = %v, want error presence = %t", tt.name, err, tt.wantErr)
+			}
+			if got := table.TryGet("debug"); tt.table.data != nil && got == nil {
+				t.Errorf("%s removed existing key %q, want it retained", tt.name, "debug")
+			}
+		})
+	}
+}
+
 func TestUpdatedByUsesCopies(t *testing.T) {
 	table := &Methodologies{
 		data: map[string]*Methodology{
