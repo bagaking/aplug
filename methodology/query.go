@@ -7,7 +7,9 @@ func (table *Methodologies) List() []*Methodology {
 
 	ret := make([]*Methodology, 0, len(table.data))
 	for _, value := range table.data {
-		ret = append(ret, cloneMethodology(value))
+		if value != nil {
+			ret = append(ret, cloneMethodology(value))
+		}
 	}
 	return ret
 }
@@ -30,7 +32,7 @@ func (table *Methodologies) MGet(keys ...string) []*Methodology {
 
 	ret := make([]*Methodology, 0, len(keys))
 	for _, key := range keys {
-		if value, ok := table.data[key]; ok {
+		if value, ok := table.data[key]; ok && value != nil {
 			ret = append(ret, cloneMethodology(value))
 		}
 	}
@@ -45,7 +47,7 @@ func (table *Methodologies) GetByScene(scene string) []*Methodology {
 	ret := make([]*Methodology, 0, len(table.data))
 	// 遍历所有的技巧
 	for _, value := range table.data {
-		if value.hasScenario(scene) {
+		if value != nil && value.hasScenario(scene) {
 			ret = append(ret, cloneMethodology(value))
 		}
 	}

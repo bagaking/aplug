@@ -293,6 +293,43 @@ func TestZeroValueContainerQueryBoundaries(t *testing.T) {
 	}
 }
 
+func TestQuerySkipsNilMethodologies(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {
+				ID:       "debug",
+				Usage:    "inspect a failure",
+				Scenario: []string{"debugging"},
+			},
+			"nil": nil,
+		},
+	}
+
+	gotList := table.List()
+	if len(gotList) != 1 {
+		t.Fatalf("List() with nil methodology length = %d, want %d", len(gotList), 1)
+	}
+	if gotList[0].ID != "debug" {
+		t.Errorf("List() with nil methodology returned ID = %q, want %q", gotList[0].ID, "debug")
+	}
+
+	gotMGet := table.MGet("nil", "debug")
+	if len(gotMGet) != 1 {
+		t.Fatalf("MGet(%q, %q) length = %d, want %d", "nil", "debug", len(gotMGet), 1)
+	}
+	if gotMGet[0].ID != "debug" {
+		t.Errorf("MGet(%q, %q)[0].ID = %q, want %q", "nil", "debug", gotMGet[0].ID, "debug")
+	}
+
+	gotScene := table.GetByScene("debugging")
+	if len(gotScene) != 1 {
+		t.Fatalf("GetByScene(%q) with nil methodology length = %d, want %d", "debugging", len(gotScene), 1)
+	}
+	if gotScene[0].ID != "debug" {
+		t.Errorf("GetByScene(%q)[0].ID = %q, want %q", "debugging", gotScene[0].ID, "debug")
+	}
+}
+
 func TestMissingKeyModifyBoundaries(t *testing.T) {
 	tests := []struct {
 		name    string
