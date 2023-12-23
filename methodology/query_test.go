@@ -232,6 +232,85 @@ func TestSetStoresCopy(t *testing.T) {
 	}
 }
 
+func TestSetAndQueryPreserveSliceNilAndEmptySemantics(t *testing.T) {
+	tests := []struct {
+		name  string
+		input *Methodology
+		check func(*testing.T, string, []string)
+	}{
+		{
+			name: "nil slices",
+			input: &Methodology{
+				ID: "nil-slices",
+			},
+			check: func(t *testing.T, field string, got []string) {
+				t.Helper()
+				if got != nil {
+					t.Errorf("%s = %#v, want nil", field, got)
+				}
+			},
+		},
+		{
+			name: "empty slices",
+			input: &Methodology{
+				ID:       "empty-slices",
+				Scenario: []string{},
+				Strategy: []string{},
+				Steps:    []string{},
+				Examples: []string{},
+			},
+			check: func(t *testing.T, field string, got []string) {
+				t.Helper()
+				if got == nil {
+					t.Errorf("%s = nil, want non-nil empty slice", field)
+				}
+				if len(got) != 0 {
+					t.Errorf("%s length = %d, want %d", field, len(got), 0)
+				}
+			},
+		},
+	}
+
+	checkFields := func(t *testing.T, got *Methodology, check func(*testing.T, string, []string)) {
+		t.Helper()
+		for _, field := range []struct {
+			name string
+			got  []string
+		}{
+			{name: "Scenario", got: got.Scenario},
+			{name: "Strategy", got: got.Strategy},
+			{name: "Steps", got: got.Steps},
+			{name: "Examples", got: got.Examples},
+		} {
+			t.Run(field.name, func(t *testing.T) {
+				t.Helper()
+				check(t, field.name, field.got)
+			})
+		}
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			table := &Methodologies{
+				data: make(map[string]*Methodology),
+			}
+			table.Set(tt.input.ID, tt.input)
+
+			got := table.TryGet(tt.input.ID)
+			if got == nil {
+				t.Fatalf("TryGet(%q) after Set = nil, want methodology", tt.input.ID)
+			}
+			checkFields(t, got, tt.check)
+
+			list := table.List()
+			if len(list) != 1 {
+				t.Fatalf("List() length = %d, want %d", len(list), 1)
+			}
+			checkFields(t, list[0], tt.check)
+		})
+	}
+}
+
 func TestSetInitializesZeroValueContainer(t *testing.T) {
 	var table Methodologies
 	input := &Methodology{

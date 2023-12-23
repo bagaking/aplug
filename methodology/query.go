@@ -63,9 +63,18 @@ func cloneMethodology(value *Methodology) *Methodology {
 		ID:       value.ID,
 		Usage:    value.Usage,
 		MainIdea: value.MainIdea,
-		Scenario: append([]string{}, value.Scenario...),
-		Strategy: append([]string{}, value.Strategy...),
-		Steps:    append([]string{}, value.Steps...),
-		Examples: append([]string{}, value.Examples...),
+		Scenario: cloneStrings(value.Scenario),
+		Strategy: cloneStrings(value.Strategy),
+		Steps:    cloneStrings(value.Steps),
+		Examples: cloneStrings(value.Examples),
 	}
+}
+
+func cloneStrings(in []string) []string {
+	if in == nil {
+		return nil
+	}
+	out := make([]string, len(in))
+	copy(out, in)
+	return out
 }
