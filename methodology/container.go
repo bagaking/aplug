@@ -12,6 +12,8 @@ type (
 var (
 	onceLoadDefault  sync.Once
 	defaultContainer *Methodologies
+
+	beforeDefaultSnapshotRLock func()
 )
 
 func NewContainer() *Methodologies {
@@ -21,6 +23,9 @@ func NewContainer() *Methodologies {
 	}
 
 	defaults := DefaultContainer()
+	if beforeDefaultSnapshotRLock != nil {
+		beforeDefaultSnapshotRLock()
+	}
 	defaults.mu.RLock()
 	defer defaults.mu.RUnlock()
 	for key, value := range defaults.data {

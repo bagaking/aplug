@@ -308,24 +308,24 @@ func TestUpdatedByUsesCopies(t *testing.T) {
 }
 
 func TestNewContainerTakesLockedSnapshot(t *testing.T) {
-	original := defaultContainer
-	originalOnce := onceLoadDefault
+	originalBeforeDefaultSnapshotRLock := beforeDefaultSnapshotRLock
 	t.Cleanup(func() {
-		defaultContainer = original
-		onceLoadDefault = originalOnce
+		beforeDefaultSnapshotRLock = originalBeforeDefaultSnapshotRLock
 	})
 
-	onceLoadDefault.Do(func() {})
-	defaultContainer = &Methodologies{
-		data: map[string]*Methodology{
-			"debug": {
-				ID:       "debug",
-				Usage:    "inspect a failure",
-				Scenario: []string{"debugging"},
-			},
-		},
+	defaults := DefaultContainer()
+
+	readyToLock := make(chan struct{})
+	beforeDefaultSnapshotRLock = func() {
+		close(readyToLock)
 	}
-	defaultContainer.mu.Lock()
+	defaults.mu.Lock()
+	locked := true
+	defer func() {
+		if locked {
+			defaults.mu.Unlock()
+		}
+	}()
 
 	done := make(chan struct{})
 	go func() {
@@ -334,12 +334,19 @@ func TestNewContainerTakesLockedSnapshot(t *testing.T) {
 	}()
 
 	select {
-	case <-done:
-		t.Fatal("NewContainer() returned while DefaultContainer lock was held, want locked snapshot")
-	case <-time.After(10 * time.Millisecond):
+	case <-readyToLock:
+	case <-time.After(time.Second):
+		t.Fatal("NewContainer() did not reach DefaultContainer read lock attempt")
 	}
 
-	defaultContainer.mu.Unlock()
+	select {
+	case <-done:
+		t.Fatal("NewContainer() returned while DefaultContainer lock was held, want locked snapshot")
+	default:
+	}
+
+	defaults.mu.Unlock()
+	locked = false
 
 	select {
 	case <-done:
