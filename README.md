@@ -20,7 +20,7 @@ TOML file.
 ## Install
 
 ```sh
-go get github.com/bagaking/aplug
+go get github.com/bagaking/aplug/methodology
 ```
 
 ## Usage
