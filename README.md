@@ -1,7 +1,7 @@
 # aplug
 
-`aplug` provides Go plugin and methodology utilities. The current public API is
-focused on the `methodology` package, which keeps a collection of structured
+`aplug` provides Go methodology utilities. The current public API is the
+`methodology` package, which keeps a collection of structured
 methodologies in memory and supports loading built-in defaults from an embedded
 TOML file.
 
