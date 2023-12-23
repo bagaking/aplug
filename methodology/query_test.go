@@ -5,6 +5,40 @@ import (
 	"time"
 )
 
+func assertStringSliceNil(t *testing.T, field string, got []string) {
+	t.Helper()
+	if got != nil {
+		t.Errorf("%s = %#v, want nil", field, got)
+	}
+}
+
+func assertStringSliceEmpty(t *testing.T, field string, got []string) {
+	t.Helper()
+	if got == nil {
+		t.Errorf("%s = nil, want non-nil empty slice", field)
+	}
+	if len(got) != 0 {
+		t.Errorf("%s length = %d, want %d", field, len(got), 0)
+	}
+}
+
+func assertMethodologyStringSlices(t *testing.T, got *Methodology, check func(*testing.T, string, []string)) {
+	t.Helper()
+	for _, field := range []struct {
+		name string
+		got  []string
+	}{
+		{name: "Scenario", got: got.Scenario},
+		{name: "Strategy", got: got.Strategy},
+		{name: "Steps", got: got.Steps},
+		{name: "Examples", got: got.Examples},
+	} {
+		t.Run(field.name, func(t *testing.T) {
+			check(t, field.name, field.got)
+		})
+	}
+}
+
 func TestListReturnsFullCopies(t *testing.T) {
 	table := &Methodologies{
 		data: map[string]*Methodology{
@@ -163,6 +197,35 @@ func TestMGetReturnsCopies(t *testing.T) {
 	}
 }
 
+func TestMGetPreservesSliceNilAndEmptySemantics(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"nil-slices": {
+				ID: "nil-slices",
+			},
+			"empty-slices": {
+				ID:       "empty-slices",
+				Scenario: []string{},
+				Strategy: []string{},
+				Steps:    []string{},
+				Examples: []string{},
+			},
+		},
+	}
+
+	got := table.MGet("nil-slices", "empty-slices")
+	if len(got) != 2 {
+		t.Fatalf("MGet(%q, %q) length = %d, want %d", "nil-slices", "empty-slices", len(got), 2)
+	}
+
+	t.Run("nil slices", func(t *testing.T) {
+		assertMethodologyStringSlices(t, got[0], assertStringSliceNil)
+	})
+	t.Run("empty slices", func(t *testing.T) {
+		assertMethodologyStringSlices(t, got[1], assertStringSliceEmpty)
+	})
+}
+
 func TestGetBySceneReturnsCopies(t *testing.T) {
 	table := &Methodologies{
 		data: map[string]*Methodology{
@@ -192,6 +255,44 @@ func TestGetBySceneReturnsCopies(t *testing.T) {
 	if again[0].Scenario[0] != "debugging" {
 		t.Errorf("GetByScene(%q)[0].Scenario[0] after mutation = %q, want %q", "debugging", again[0].Scenario[0], "debugging")
 	}
+}
+
+func TestGetByScenePreservesSliceNilAndEmptySemantics(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"nil-slices": {
+				ID:       "nil-slices",
+				Scenario: []string{"debugging"},
+			},
+			"empty-slices": {
+				ID:       "empty-slices",
+				Scenario: []string{"debugging"},
+				Strategy: []string{},
+				Steps:    []string{},
+				Examples: []string{},
+			},
+		},
+	}
+
+	got := table.GetByScene("debugging")
+	if len(got) != 2 {
+		t.Fatalf("GetByScene(%q) length = %d, want %d", "debugging", len(got), 2)
+	}
+	byID := map[string]*Methodology{
+		got[0].ID: got[0],
+		got[1].ID: got[1],
+	}
+
+	t.Run("nil slices", func(t *testing.T) {
+		assertStringSliceNil(t, "Strategy", byID["nil-slices"].Strategy)
+		assertStringSliceNil(t, "Steps", byID["nil-slices"].Steps)
+		assertStringSliceNil(t, "Examples", byID["nil-slices"].Examples)
+	})
+	t.Run("empty slices", func(t *testing.T) {
+		assertStringSliceEmpty(t, "Strategy", byID["empty-slices"].Strategy)
+		assertStringSliceEmpty(t, "Steps", byID["empty-slices"].Steps)
+		assertStringSliceEmpty(t, "Examples", byID["empty-slices"].Examples)
+	})
 }
 
 func TestSetStoresCopy(t *testing.T) {
@@ -542,6 +643,41 @@ func TestUpdatedByUsesCopies(t *testing.T) {
 	if got.Examples[0] != "callback changed" {
 		t.Errorf("TryGet(%q).Examples[0] after returned mutation = %q, want %q", "debug", got.Examples[0], "callback changed")
 	}
+}
+
+func TestUpdatedByPreservesSliceNilAndEmptySemantics(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"nil-slices": {
+				ID: "nil-slices",
+			},
+			"empty-slices": {
+				ID:       "empty-slices",
+				Scenario: []string{},
+				Strategy: []string{},
+				Steps:    []string{},
+				Examples: []string{},
+			},
+		},
+	}
+
+	err := table.UpdatedBy("nil-slices", func(m *Methodology) *Methodology {
+		assertMethodologyStringSlices(t, m, assertStringSliceNil)
+		return m
+	})
+	if err != nil {
+		t.Fatalf("UpdatedBy(%q) error = %v, want nil", "nil-slices", err)
+	}
+	assertMethodologyStringSlices(t, table.TryGet("nil-slices"), assertStringSliceNil)
+
+	err = table.UpdatedBy("empty-slices", func(m *Methodology) *Methodology {
+		assertMethodologyStringSlices(t, m, assertStringSliceEmpty)
+		return m
+	})
+	if err != nil {
+		t.Fatalf("UpdatedBy(%q) error = %v, want nil", "empty-slices", err)
+	}
+	assertMethodologyStringSlices(t, table.TryGet("empty-slices"), assertStringSliceEmpty)
 }
 
 func TestUpdatedByNilRemovesMethodology(t *testing.T) {
