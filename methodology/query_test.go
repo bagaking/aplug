@@ -1,6 +1,9 @@
 package methodology
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestListReturnsFullCopies(t *testing.T) {
 	table := &Methodologies{
@@ -301,5 +304,46 @@ func TestUpdatedByUsesCopies(t *testing.T) {
 	}
 	if got.Examples[0] != "callback changed" {
 		t.Errorf("TryGet(%q).Examples[0] after returned mutation = %q, want %q", "debug", got.Examples[0], "callback changed")
+	}
+}
+
+func TestNewContainerTakesLockedSnapshot(t *testing.T) {
+	original := defaultContainer
+	originalOnce := onceLoadDefault
+	t.Cleanup(func() {
+		defaultContainer = original
+		onceLoadDefault = originalOnce
+	})
+
+	onceLoadDefault.Do(func() {})
+	defaultContainer = &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {
+				ID:       "debug",
+				Usage:    "inspect a failure",
+				Scenario: []string{"debugging"},
+			},
+		},
+	}
+	defaultContainer.mu.Lock()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		NewContainer()
+	}()
+
+	select {
+	case <-done:
+		t.Fatal("NewContainer() returned while DefaultContainer lock was held, want locked snapshot")
+	case <-time.After(10 * time.Millisecond):
+	}
+
+	defaultContainer.mu.Unlock()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("NewContainer() did not return after DefaultContainer lock was released")
 	}
 }

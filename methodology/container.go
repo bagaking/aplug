@@ -19,7 +19,11 @@ func NewContainer() *Methodologies {
 		data: make(map[string]*Methodology),
 		mu:   sync.RWMutex{},
 	}
-	for key, value := range DefaultContainer().data {
+
+	defaults := DefaultContainer()
+	defaults.mu.RLock()
+	defer defaults.mu.RUnlock()
+	for key, value := range defaults.data {
 		container.data[key] = cloneMethodology(value)
 	}
 
