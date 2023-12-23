@@ -14,6 +14,10 @@ func (table *Methodologies) Set(key string, m *Methodology) {
 	if table.data == nil {
 		table.data = make(map[string]*Methodology)
 	}
+	if m == nil {
+		delete(table.data, key)
+		return
+	}
 	table.data[key] = cloneMethodology(m)
 }
 
@@ -37,6 +41,11 @@ func (table *Methodologies) UpdatedBy(
 	if !ok {
 		return fmt.Errorf("methodology not found: %v", key)
 	}
-	table.data[key] = cloneMethodology(fn(cloneMethodology(method)))
+	updated := fn(cloneMethodology(method))
+	if updated == nil {
+		delete(table.data, key)
+		return nil
+	}
+	table.data[key] = cloneMethodology(updated)
 	return nil
 }

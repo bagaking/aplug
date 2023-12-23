@@ -254,6 +254,23 @@ func TestSetInitializesZeroValueContainer(t *testing.T) {
 	}
 }
 
+func TestSetNilRemovesMethodology(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {ID: "debug", Usage: "inspect a failure"},
+		},
+	}
+
+	table.Set("debug", nil)
+
+	if got := table.TryGet("debug"); got != nil {
+		t.Fatalf("TryGet(%q) after Set nil = %#v, want nil", "debug", got)
+	}
+	if got := table.List(); len(got) != 0 {
+		t.Fatalf("List() after Set nil length = %d, want %d", len(got), 0)
+	}
+}
+
 func TestZeroValueContainerQueryBoundaries(t *testing.T) {
 	var table Methodologies
 
@@ -445,6 +462,30 @@ func TestUpdatedByUsesCopies(t *testing.T) {
 	}
 	if got.Examples[0] != "callback changed" {
 		t.Errorf("TryGet(%q).Examples[0] after returned mutation = %q, want %q", "debug", got.Examples[0], "callback changed")
+	}
+}
+
+func TestUpdatedByNilRemovesMethodology(t *testing.T) {
+	table := &Methodologies{
+		data: map[string]*Methodology{
+			"debug": {ID: "debug", Usage: "inspect a failure"},
+		},
+	}
+
+	err := table.UpdatedBy("debug", func(m *Methodology) *Methodology {
+		if m == nil {
+			t.Fatal("UpdatedBy callback received nil, want existing methodology copy")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("UpdatedBy(%q) error = %v, want nil", "debug", err)
+	}
+	if got := table.TryGet("debug"); got != nil {
+		t.Fatalf("TryGet(%q) after UpdatedBy nil = %#v, want nil", "debug", got)
+	}
+	if got := table.MGet("debug"); len(got) != 0 {
+		t.Fatalf("MGet(%q) after UpdatedBy nil length = %d, want %d", "debug", len(got), 0)
 	}
 }
 

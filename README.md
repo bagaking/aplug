@@ -28,7 +28,8 @@ TOML file.
   `List`, `TryGet`, `MGet`, and `GetByScene` return copies; `UpdatedBy` passes a
   copy to the callback and stores a copy of the returned value.
 - `Set` upserts by key and can initialize a zero-value container. It does not
-  reconcile the map key with `Methodology.ID`.
+  reconcile the map key with `Methodology.ID`. Passing `nil` to `Set`, or
+  returning `nil` from `UpdatedBy`, removes that key.
 - `Delete` is a no-op for missing keys, `TryGet` returns `nil` for a missing
   key, `MGet` skips missing keys, and `UpdatedBy` returns an error when the key
   does not exist.
